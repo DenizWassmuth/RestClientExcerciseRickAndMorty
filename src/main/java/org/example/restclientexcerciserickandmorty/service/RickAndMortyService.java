@@ -1,17 +1,13 @@
 package org.example.restclientexcerciserickandmorty.service;
 
-
 import org.example.restclientexcerciserickandmorty.model.RickAndMortyCharInfo;
-import org.example.restclientexcerciserickandmorty.model.RickAndMortyMultiCharData;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class RickAndMortyService {
