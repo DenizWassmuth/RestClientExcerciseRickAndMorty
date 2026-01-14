@@ -1,6 +1,7 @@
 package org.example.restclientexcerciserickandmorty.service;
 
 import org.example.restclientexcerciserickandmorty.model.RickAndMortyCharInfo;
+import org.example.restclientexcerciserickandmorty.model.RickAndMortyMultiCharData;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
@@ -38,6 +39,12 @@ public class RickAndMortyService {
     // Public: all characters by status (alive/dead/unknown)
     public List<RickAndMortyCharInfo> getCharsByStatus(String statusRaw) {
         String status = normalizeStatus(statusRaw);
+//        return restClient.get()
+//                .uri("/character?status=" + status)
+//                .retrieve()
+//                .body(RickAndMortyMultiCharData.class)
+//                .results();
+
         return fetchAllPages(status);
     }
 
@@ -63,7 +70,6 @@ public class RickAndMortyService {
                             if (statusOrNull != null) {
                                 b.queryParam("status", statusOrNull);
                             }
-
                             return b.build();
                         })
                         .retrieve()
@@ -113,4 +119,45 @@ public class RickAndMortyService {
 
         throw new IllegalArgumentException("Invalid status: '" + raw + "'. Allowed: alive, dead, unknown.");
     }
+
+    /**
+     * Liefert die Anzahl von Charakteren einer Spezies.
+     * Wir nutzen die externe Filter-API: ?species=human
+     * und lesen "info.count" direkt aus dem JSON (ohne Info/Page-DTO).
+     *
+     * Wenn es keine Treffer gibt, liefert die externe API oft 404 -> wir geben 0 zurück.
+     */
+    public int countBySpecies(String speciesRaw) {
+        String species = speciesRaw.trim();
+
+                  return restClient.get()
+                          .uri("/character?status=alive&species=" + species)
+                          .retrieve()
+                          .body(RickAndMortyMultiCharData.class)
+                          .results().size();
+
+//        try {
+//            JsonNode root = restClient.get()
+//                    .uri(uriBuilder -> uriBuilder
+//                            .path("/character")
+//                            .queryParam("species", species)  // Filter 1: Spezies
+//                            .build())
+//                    .retrieve()
+//                    .body(JsonNode.class);
+//
+//            if (root == null) {
+//                return 0;
+//            }
+//
+//            // info.count enthält die Gesamtzahl aller Treffer für diese Filter
+//            JsonNode countNode = root.path("info").path("count");
+//            return countNode.isMissingNode() ? 0 : countNode.asInt();
+//
+//        } catch (HttpClientErrorException.NotFound e) {
+//            // Keine Treffer -> 0
+//            return 0;
+//        }
+    }
 }
+
+
