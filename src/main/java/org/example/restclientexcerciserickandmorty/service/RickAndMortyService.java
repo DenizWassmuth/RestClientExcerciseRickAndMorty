@@ -31,14 +31,15 @@ public class RickAndMortyService {
         return charById;
     }
 
-    // Public: all characters (no filter)
+    // all characters (no filter)
     public List<RickAndMortyCharInfo> getAllRickAndMortyChars() {
         return fetchAllPages(null);
     }
 
-    // Public: all characters by status (alive/dead/unknown)
+    // all characters by status (alive/dead/unknown)
     public List<RickAndMortyCharInfo> getCharsByStatus(String statusRaw) {
         String status = normalizeStatus(statusRaw);
+
 //        return restClient.get()
 //                .uri("/character?status=" + status)
 //                .retrieve()
@@ -48,11 +49,7 @@ public class RickAndMortyService {
         return fetchAllPages(status);
     }
 
-    /**
-     * Fetches ALL pages from the external API and merges them into one list.
-     * We do NOT model "info" or "pages" as a DTO.
-     * Instead, we request page=1,2,3,... until the API indicates "no more pages".
-     */
+
     private List<RickAndMortyCharInfo> fetchAllPages(String statusOrNull) {
         List<RickAndMortyCharInfo> out = new ArrayList<>();
         int page = 1;
@@ -120,43 +117,34 @@ public class RickAndMortyService {
         throw new IllegalArgumentException("Invalid status: '" + raw + "'. Allowed: alive, dead, unknown.");
     }
 
-    /**
-     * Liefert die Anzahl von Charakteren einer Spezies.
-     * Wir nutzen die externe Filter-API: ?species=human
-     * und lesen "info.count" direkt aus dem JSON (ohne Info/Page-DTO).
-     *
-     * Wenn es keine Treffer gibt, liefert die externe API oft 404 -> wir geben 0 zurück.
-     */
-    public int countBySpecies(String speciesRaw) {
-        String species = speciesRaw.trim();
 
-                  return restClient.get()
-                          .uri("/character?status=alive&species=" + species)
-                          .retrieve()
-                          .body(RickAndMortyMultiCharData.class)
-                          .results().size();
+    public int countBySpecies(String species) {
 
-//        try {
-//            JsonNode root = restClient.get()
-//                    .uri(uriBuilder -> uriBuilder
-//                            .path("/character")
-//                            .queryParam("species", species)  // Filter 1: Spezies
-//                            .build())
-//                    .retrieve()
-//                    .body(JsonNode.class);
-//
-//            if (root == null) {
-//                return 0;
-//            }
-//
-//            // info.count enthält die Gesamtzahl aller Treffer für diese Filter
-//            JsonNode countNode = root.path("info").path("count");
-//            return countNode.isMissingNode() ? 0 : countNode.asInt();
-//
-//        } catch (HttpClientErrorException.NotFound e) {
-//            // Keine Treffer -> 0
-//            return 0;
-//        }
+//                  return restClient.get()
+//                          .uri("/character/?status=alive&species=" + species)
+//                          .retrieve()
+//                          .body(RickAndMortyMultiCharData.class)
+//                          .results().size();
+
+        try {
+            JsonNode root = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/character")
+                            .queryParam("status", "alive")   // wichtig: nur lebende
+                            .queryParam("species", species)  // Spezies-Filter
+                            .build())
+                    .retrieve()
+                    .body(JsonNode.class);
+
+            if (root == null) return 0;
+
+            JsonNode countNode = root.path("info").path("count");
+            return countNode.isMissingNode() ? 0 : countNode.asInt();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            // keine Treffer -> 0
+            return 0;
+        }
     }
 }
 

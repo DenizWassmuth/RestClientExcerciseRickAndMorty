@@ -36,18 +36,18 @@ public class RickAndMortyController {
         return rickAndMortyService.getCharsByStatus(status);
     }
 
-    @GetMapping(value = "/species-statistic", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping("/species-statistic")
     //@GetMapping("/species-statistic")
-    public int getNumberOfCharsOfSpecies(@RequestParam(required = false) String value) {
+    public int getNumOfCharsOfSpecies(@RequestParam(name = "species") String species) {
+        if (species == null || species.isBlank()) {
+            return rickAndMortyService.getAllRickAndMortyChars().size();
+        }
+//
 //        if (value == null || value.isBlank()) {
-//            return rickAndMortyService.getAllRickAndMortyChars().size();
+//
+//            throw new IllegalArgumentException("species query parameter is required");
 //        }
 
-        if (value == null || value.isBlank()) {
-            // Decide what your API should do if missing:
-            throw new IllegalArgumentException("species query parameter is required");
-        }
-
-        return rickAndMortyService.countBySpecies(value);
+        return rickAndMortyService.countBySpecies(species);
     }
 }
