@@ -17,23 +17,21 @@ public class RickAndMortyController {
         this.rickAndMortyService = rickAndMortyService;
     }
 
-//    @GetMapping
-//    List<RickAndMortyCharInfo> getAllRickAndMortyChars() {
-//        return rickAndMortyService.getAllRickAndMortyChars();
-//    }
-
     @GetMapping("/{id}")
     RickAndMortyCharInfo  getRickAndMortyCharById(@PathVariable int id) {
         return rickAndMortyService.getRickAndMortyCharById(id);
     }
 
+    // GET /api/characters?status=alive
     @GetMapping
-    List<RickAndMortyCharInfo> getCharsByStatus(@PathVariable String status) {
+    public List<RickAndMortyCharInfo> getCharacters(@RequestParam(required = false) String status) {
 
+        // If no status -> return all (your existing method)
         if (status == null || status.isBlank()) {
             return rickAndMortyService.getAllRickAndMortyChars();
         }
 
+        // If status -> return filtered list
         return rickAndMortyService.getCharsByStatus(status);
     }
 }
