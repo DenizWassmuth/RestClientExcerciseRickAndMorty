@@ -17,10 +17,10 @@ public class RickAndMortyController {
         this.rickAndMortyService = rickAndMortyService;
     }
 
-    @GetMapping
-    List<RickAndMortyCharInfo> getAllRickAndMortyChars() {
-        return rickAndMortyService.getAllRickAndMortyChars();
-    }
+//    @GetMapping
+//    List<RickAndMortyCharInfo> getAllRickAndMortyChars() {
+//        return rickAndMortyService.getAllRickAndMortyChars();
+//    }
 
     @GetMapping("/{id}")
     RickAndMortyCharInfo  getRickAndMortyCharById(@PathVariable int id) {
@@ -29,6 +29,11 @@ public class RickAndMortyController {
 
     @GetMapping
     List<RickAndMortyCharInfo> getCharsByStatus(@PathVariable String status) {
+
+        if (status == null || status.isBlank()) {
+            return rickAndMortyService.getAllRickAndMortyChars();
+        }
+
         return rickAndMortyService.getCharsByStatus(status);
     }
 }
