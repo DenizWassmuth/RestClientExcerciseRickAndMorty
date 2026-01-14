@@ -23,9 +23,9 @@ public class RickAndMortyService {
 
     public RickAndMortyCharInfo getRickAndMortyCharById(int id) {
         RickAndMortyCharInfo charById = restClient
-                .get() // CRUD Methode
+                .get()
                 .uri("/character/{id}", id) // speziefischer Ort für die Anfrage
-                .retrieve() // quasi button click
+                .retrieve() // button click
                 .body(RickAndMortyCharInfo.class); // Rückgabe wird in eine class umgewandelt
 
         return charById;
@@ -38,60 +38,49 @@ public class RickAndMortyService {
 
     // all characters by status (alive/dead/unknown)
     public List<RickAndMortyCharInfo> getCharsByStatus(String statusRaw) {
-        String status = normalizeStatus(statusRaw);
 
+        String status = normalizeStatus(statusRaw);
+        return fetchAllPages(status);
+    }
+
+    private List<RickAndMortyCharInfo> fetchAllPages(String statusOrNull) {
+
+        // this would only return the chars from the first page!
 //        return restClient.get()
-//                .uri("/character?status=" + status)
+//                .uri("/character)
 //                .retrieve()
 //                .body(RickAndMortyMultiCharData.class)
 //                .results();
 
-        return fetchAllPages(status);
-    }
-
-
-    private List<RickAndMortyCharInfo> fetchAllPages(String statusOrNull) {
         List<RickAndMortyCharInfo> out = new ArrayList<>();
-        int page = 1;
+
+        int page= 1;
 
         while (true) {
             try {
-                final int finalPage = page;
-                JsonNode root = restClient.get()
+                final int finalPage = page; // TODO: why final?
+
+                RickAndMortyMultiCharData charData = restClient.get()
                         .uri(uriBuilder -> {
-                            var b = uriBuilder
+                            var builder = uriBuilder
                                     .path("/character")
                                     .queryParam("page", finalPage);
 
-                            // Only add the status filter if it was requested
+                            // only add the status filter if it was requested
                             if (statusOrNull != null) {
-                                b.queryParam("status", statusOrNull);
+                                builder.queryParam("status", statusOrNull);
                             }
-                            return b.build();
+                            return builder.build();
                         })
                         .retrieve()
-                        .body(JsonNode.class);
+                        .body(RickAndMortyMultiCharData.class);
 
-                // If results is missing or empty -> stop
-                if (root == null || root.get("results") == null || !root.get("results").isArray()) {
+                // if results is missing or empty -> stop
+                if (charData == null || charData.results() == null) {
                     break;
                 }
 
-                JsonNode results = root.get("results");
-                if (results.isEmpty()) {
-                    break;
-                }
-
-                // Add all characters from this page to the final list
-                for (JsonNode c : results) {
-                    out.add(new RickAndMortyCharInfo(
-                            c.get("id").asText(),
-                            c.get("name").asText(),
-                            c.get("species").asText(),
-                            c.get("status").asText()
-                    ));
-                }
-
+                out.addAll(charData.results());
                 page++; // next page
 
             } catch (HttpClientErrorException.NotFound e) {
@@ -104,42 +93,44 @@ public class RickAndMortyService {
         return out;
     }
 
-    private String normalizeStatus(String raw) {
-        if (raw == null) {
+    private String normalizeStatus(String rawStatus) {
+
+        if (rawStatus == null) {
             throw new IllegalArgumentException("status must not be null");
         }
 
-        String s = raw.trim().toLowerCase();
-        if (s.equals("alive") || s.equals("dead") || s.equals("unknown")) {
-            return s;
+        String status = rawStatus.trim().toLowerCase();
+        if (status.equals("alive") || status.equals("dead") || status.equals("unknown")) {
+            return status;
         }
 
-        throw new IllegalArgumentException("Invalid status: '" + raw + "'. Allowed: alive, dead, unknown.");
+        throw new IllegalArgumentException("Invalid status: '" + rawStatus + "'. Allowed: alive, dead, unknown.");
     }
-
 
     public int countBySpecies(String species) {
 
+        // this would only return the chars from the first page!
 //                  return restClient.get()
 //                          .uri("/character/?status=alive&species=" + species)
 //                          .retrieve()
 //                          .body(RickAndMortyMultiCharData.class)
 //                          .results().size();
 
+        int count = 0;
+
         try {
-            JsonNode root = restClient.get()
+            RickAndMortyMultiCharData charData = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/character")
                             .queryParam("status", "alive")   // wichtig: nur lebende
                             .queryParam("species", species)  // Spezies-Filter
                             .build())
                     .retrieve()
-                    .body(JsonNode.class);
+                    .body(RickAndMortyMultiCharData.class);
 
-            if (root == null) return 0;
+            if (charData == null) return 0;
 
-            JsonNode countNode = root.path("info").path("count");
-            return countNode.isMissingNode() ? 0 : countNode.asInt();
+            return charData.info().count();
 
         } catch (HttpClientErrorException.NotFound e) {
             // keine Treffer -> 0

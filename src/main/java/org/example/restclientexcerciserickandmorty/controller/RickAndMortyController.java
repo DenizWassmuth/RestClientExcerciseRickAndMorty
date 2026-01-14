@@ -3,7 +3,6 @@ package org.example.restclientexcerciserickandmorty.controller;
 
 import org.example.restclientexcerciserickandmorty.model.RickAndMortyCharInfo;
 import org.example.restclientexcerciserickandmorty.service.RickAndMortyService;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +14,7 @@ public class RickAndMortyController {
     private final RickAndMortyService rickAndMortyService;
 
     RickAndMortyController(RickAndMortyService rickAndMortyService) {
+
         this.rickAndMortyService = rickAndMortyService;
     }
 
@@ -23,30 +23,27 @@ public class RickAndMortyController {
         return rickAndMortyService.getRickAndMortyCharById(id);
     }
 
-    // GET /api/characters?status=alive
+    // /api/characters?status=alive
     @GetMapping("/characters")
     public List<RickAndMortyCharInfo> getCharacters(@RequestParam(required = false) String status) {
 
-        // If no status -> return all (your existing method)
+        //  no status -> return all
         if (status == null || status.isBlank()) {
             return rickAndMortyService.getAllRickAndMortyChars();
         }
 
-        // If status -> return filtered list
+        // status -> return filtered list
         return rickAndMortyService.getCharsByStatus(status);
     }
 
+    // /api/characters?status=alive&species=...
     @GetMapping("/species-statistic")
-    //@GetMapping("/species-statistic")
-    public int getNumOfCharsOfSpecies(@RequestParam(name = "species") String species) {
+    public int getNumOfCharsOfSpecies(@RequestParam(name = "species", required = false) String species) {
+
         if (species == null || species.isBlank()) {
             return rickAndMortyService.getAllRickAndMortyChars().size();
+            //throw new IllegalArgumentException("species query parameter is required");
         }
-//
-//        if (value == null || value.isBlank()) {
-//
-//            throw new IllegalArgumentException("species query parameter is required");
-//        }
 
         return rickAndMortyService.countBySpecies(species);
     }
